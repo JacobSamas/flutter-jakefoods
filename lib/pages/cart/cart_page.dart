@@ -51,7 +51,7 @@ class _CartPageState extends State<CartPage> {
   void goToCheckout() async {
     final result = await Navigator.of(context).push(
       MaterialPageRoute(
-        builder: (_) => CheckoutPage(total: total),
+        builder: (_) => CheckoutPage(total: total, items: List<Map<String, dynamic>>.from(demoItems)),
       ),
     );
     if (result == 'order_placed') {

@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
+import '../../models/order.dart';
+import '../../utils/local_storage.dart';
 
 class CheckoutPage extends StatefulWidget {
   final double total;
-  const CheckoutPage({super.key, required this.total});
+  final List<Map<String, dynamic>> items;
+  const CheckoutPage({super.key, required this.total, required this.items});
 
   @override
   State<CheckoutPage> createState() => _CheckoutPageState();
@@ -16,10 +19,21 @@ class _CheckoutPageState extends State<CheckoutPage> {
   bool isPlacingOrder = false;
   bool orderPlaced = false;
 
-  void placeOrder() async {
+  Future<void> placeOrder() async {
     if (!_formKey.currentState!.validate()) return;
     setState(() { isPlacingOrder = true; });
     await Future.delayed(const Duration(seconds: 2));
+    // Save order to local storage
+    final order = Order(
+      id: DateTime.now().millisecondsSinceEpoch.toString(),
+      date: DateTime.now().toIso8601String().substring(0, 10),
+      total: widget.total,
+      status: 'Placed',
+      items: widget.items,
+    );
+    final orders = await LocalStorage.loadOrders();
+    orders.insert(0, order); // newest first
+    await LocalStorage.saveOrders(orders);
     setState(() {
       isPlacingOrder = false;
       orderPlaced = true;
@@ -42,10 +56,10 @@ class _CheckoutPageState extends State<CheckoutPage> {
                   const SizedBox(height: 18),
                   const Text('Order Placed!', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
                   const SizedBox(height: 10),
-                  Text('Thank you for ordering with JakeFoods!', style: TextStyle(fontSize: 16, color: Colors.grey[700])),
+                  Text('Thank you for ordering with JakeFoods!', style: TextStyle(fontSize: 16, color: Colors.grey)),
                   const SizedBox(height: 30),
                   ElevatedButton(
-                    onPressed: () => Navigator.of(context).popUntil((route) => route.isFirst),
+                    onPressed: () => Navigator.of(context).pop('order_placed'),
                     style: ElevatedButton.styleFrom(backgroundColor: Colors.deepOrange),
                     child: const Text('Back to Home'),
                   ),
